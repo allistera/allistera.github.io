@@ -8,8 +8,7 @@
     "lint:html": "htmlhint \"*.html\"",
     "lint:css": "stylelint \"**/*.css\"",
     "lint:js": "eslint \"**/*.js\"",
-    "lint:fix": "npm run lint:css -- --fix && npm run lint:js -- --fix",
-    "build:articles": "node .github/scripts/build-articles.js"
+    "lint:fix": "npm run lint:css -- --fix && npm run lint:js -- --fix"
   },
   "keywords": [
     "portfolio",

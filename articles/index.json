@@ -1,0 +1,8 @@
+[
+  {
+    "slug": "zero-downtime-kubernetes-deployments",
+    "title": "Zero-Downtime Deployments with Kubernetes Rolling Updates",
+    "description": "Learn how to configure Kubernetes rolling updates and readiness probes to keep your applications available during every deployment.",
+    "date": "2025-11-15"
+  }
+]

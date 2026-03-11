@@ -56,7 +56,7 @@
     <!-- Article view (shown when navigating to an article) -->
     <div id="article-view" style="display: none;">
         <div class="article-container">
-            <a href="#" class="back-link">&larr; Back</a>
+            <a href="#" class="back-link" id="back-btn">&larr; Back</a>
             <article>
                 <h1 id="article-title"></h1>
                 <p id="article-date" class="article-meta-date"></p>
@@ -213,15 +213,20 @@
 
           list.querySelectorAll('.article-card').forEach(function (card) {
             card.addEventListener('click', function () {
-              window.location.hash = 'article/' + card.getAttribute('data-slug');
+              navigateTo(card.getAttribute('data-slug'));
             });
             card.addEventListener('keydown', function (e) {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                window.location.hash = 'article/' + card.getAttribute('data-slug');
+                navigateTo(card.getAttribute('data-slug'));
               }
             });
           });
+        }
+
+        function navigateTo(slug) {
+          history.pushState({ slug: slug }, '', '#article/' + slug);
+          showArticle(slug);
         }
 
         async function loadArticleIndex() {
@@ -237,12 +242,19 @@
         async function showArticle(slug) {
           var homepage = document.querySelector('.container');
           var view = document.getElementById('article-view');
+          var contentEl = document.getElementById('article-content');
+
+          homepage.style.display = 'none';
+          view.style.display = '';
+          window.scrollTo(0, 0);
 
           try {
             var res = await fetch('articles/' + slug + '.md');
-            if (!res.ok) throw new Error('Not found');
+            if (!res.ok) throw new Error('Article not found (HTTP ' + res.status + ')');
             var text = await res.text();
             var parsed = parseFrontmatter(text);
+
+            if (!window.marked) throw new Error('Markdown library not loaded');
 
             var html = window.marked.parse(parsed.body);
 
@@ -251,18 +263,17 @@
             var dateEl = document.getElementById('article-date');
             dateEl.textContent = parsed.data.date ? formatDate(parsed.data.date) : '';
 
-            var contentEl = document.getElementById('article-content');
             contentEl.innerHTML = html;
 
-            contentEl.querySelectorAll('pre code').forEach(function (block) {
-              window.hljs.highlightElement(block);
-            });
-
-            homepage.style.display = 'none';
-            view.style.display = '';
-            window.scrollTo(0, 0);
+            if (window.hljs) {
+              contentEl.querySelectorAll('pre code').forEach(function (block) {
+                window.hljs.highlightElement(block);
+              });
+            }
           } catch (e) {
-            window.location.hash = '';
+            document.getElementById('article-title').textContent = 'Error';
+            document.getElementById('article-date').textContent = '';
+            contentEl.innerHTML = '<p>Could not load this article. ' + escapeHtml(e.message) + '</p>';
           }
         }
 
@@ -271,11 +282,10 @@
           document.getElementById('article-view').style.display = 'none';
         }
 
-        async function handleRouting() {
+        function handlePopState() {
           var hash = window.location.hash;
           if (hash.indexOf('#article/') === 0) {
-            var slug = hash.slice('#article/'.length);
-            await showArticle(slug);
+            showArticle(hash.slice('#article/'.length));
           } else {
             showHomepage();
           }
@@ -284,10 +294,20 @@
         async function init() {
           var articles = await loadArticleIndex();
           renderArticleCards(articles);
-          await handleRouting();
+
+          document.getElementById('back-btn').addEventListener('click', function (e) {
+            e.preventDefault();
+            history.pushState(null, '', location.pathname);
+            showHomepage();
+          });
+
+          var hash = window.location.hash;
+          if (hash.indexOf('#article/') === 0) {
+            showArticle(hash.slice('#article/'.length));
+          }
         }
 
-        window.addEventListener('hashchange', handleRouting);
+        window.addEventListener('popstate', handlePopState);
         document.addEventListener('DOMContentLoaded', init);
       }());
     </script>

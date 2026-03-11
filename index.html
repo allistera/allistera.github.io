@@ -191,6 +191,40 @@
           return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
+        function normalizeHeadingText(text) {
+          return text.trim().replace(/\s+/g, ' ').replace(/#+$/g, '').trim().toLowerCase();
+        }
+
+        function stripDuplicateTitleHeading(body, title) {
+          if (!title) return body;
+
+          var lines = body.split('\n');
+          var firstContentLine = -1;
+
+          for (var i = 0; i < lines.length; i += 1) {
+            if (lines[i].trim() !== '') {
+              firstContentLine = i;
+              break;
+            }
+          }
+
+          if (firstContentLine === -1) return body;
+
+          var headingMatch = lines[firstContentLine].match(/^#\s+(.+?)\s*#*\s*$/);
+          if (!headingMatch) return body;
+
+          if (normalizeHeadingText(headingMatch[1]) !== normalizeHeadingText(title)) {
+            return body;
+          }
+
+          lines.splice(firstContentLine, 1);
+          if (lines[firstContentLine] !== undefined && lines[firstContentLine].trim() === '') {
+            lines.splice(firstContentLine, 1);
+          }
+
+          return lines.join('\n');
+        }
+
         function renderArticleCards(articles) {
           var list = document.getElementById('article-list');
 
@@ -256,7 +290,8 @@
 
             if (!window.marked) throw new Error('Markdown library not loaded');
 
-            var html = window.marked.parse(parsed.body);
+            var articleBody = stripDuplicateTitleHeading(parsed.body, parsed.data.title);
+            var html = window.marked.parse(articleBody);
 
             document.getElementById('article-title').textContent = parsed.data.title || slug;
 

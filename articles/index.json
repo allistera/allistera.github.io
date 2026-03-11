@@ -1,5 +1,11 @@
 [
   {
+    "slug": "mass-uninstall-ios-apps-apple-configurator",
+    "title": "Mass Uninstall iOS Apps with Apple Configurator on Mac",
+    "description": "Stop removing apps one by one — Apple Configurator lets you select and uninstall multiple apps from iOS devices in a single action, saving significant time when managing many devices or doing a spring clean.",
+    "date": "2026-03-11"
+  },
+  {
     "slug": "zero-downtime-kubernetes-deployments",
     "title": "Zero-Downtime Deployments with Kubernetes Rolling Updates",
     "description": "Learn how to configure Kubernetes rolling updates and readiness probes to keep your applications available during every deployment.",

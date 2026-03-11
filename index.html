@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Allister Antosik - Lead SRE &amp; Software Developer</title>
+    <title>Allister Antosik - Lead SRE & Software Developer</title>
 
     <!-- SEO Meta Tags -->
     <meta name="description" content="Lead SRE with expertise in Ruby, JavaScript, Python, Terraform, AWS, GCP, and Kubernetes. Former Senior Software Developer building software and working on various projects.">
@@ -12,7 +12,7 @@
     <link rel="canonical" href="https://allisterantosik.com/">
 
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Allister Antosik - Lead SRE &amp; Software Developer">
+    <meta property="og:title" content="Allister Antosik - Lead SRE & Software Developer">
     <meta property="og:description" content="Lead SRE with expertise in Ruby, JavaScript, Python, Terraform, AWS, GCP, and Kubernetes. Former Senior Software Developer building software and working on various projects.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://allisterantosik.com/">
@@ -20,7 +20,7 @@
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Allister Antosik - Lead SRE &amp; Software Developer">
+    <meta name="twitter:title" content="Allister Antosik - Lead SRE & Software Developer">
     <meta name="twitter:description" content="Lead SRE with expertise in Ruby, JavaScript, Python, Terraform, AWS, GCP, and Kubernetes. Former Senior Software Developer building software and working on various projects.">
 
     <!-- JSON-LD Structured Data -->
@@ -50,22 +50,8 @@
     </script>
 
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
 </head>
 <body>
-    <!-- Article view (shown when navigating to an article) -->
-    <div id="article-view" style="display: none;">
-        <div class="article-container">
-            <a href="#" class="back-link">&larr; Back</a>
-            <article>
-                <h1 id="article-title"></h1>
-                <p id="article-date" class="article-meta-date"></p>
-                <div id="article-content" class="article-content"></div>
-            </article>
-        </div>
-    </div>
-
-    <!-- Homepage -->
     <div class="container">
         <header>
             <h1>Allister Antosik</h1>
@@ -88,13 +74,6 @@
                 <span class="skill-pill">AWS</span>
                 <span class="skill-pill">GCP</span>
                 <span class="skill-pill">Kubernetes</span>
-            </div>
-        </section>
-
-        <section class="articles">
-            <h2>Articles</h2>
-            <div id="article-list" class="article-list">
-                <p class="articles-loading">Loading articles...</p>
             </div>
         </section>
 
@@ -155,141 +134,5 @@
             <p class="copyright">&copy; 2025 Allister Antosik</p>
         </footer>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script>
-      (function () {
-        'use strict';
-
-        function parseFrontmatter(content) {
-          var match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
-          if (!match) return { data: {}, body: content };
-
-          var lines = match[1].split('\n');
-          var data = {};
-          lines.forEach(function (line) {
-            var idx = line.indexOf(':');
-            if (idx > -1) {
-              var key = line.slice(0, idx).trim();
-              var val = line.slice(idx + 1).trim();
-              data[key] = val;
-            }
-          });
-
-          return { data: data, body: content.slice(match[0].length) };
-        }
-
-        function escapeHtml(str) {
-          var div = document.createElement('div');
-          div.appendChild(document.createTextNode(str));
-          return div.innerHTML;
-        }
-
-        function formatDate(dateStr) {
-          var d = new Date(dateStr + 'T00:00:00');
-          return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        }
-
-        function renderArticleCards(articles) {
-          var list = document.getElementById('article-list');
-
-          if (!articles.length) {
-            list.innerHTML = '<p class="articles-empty">No articles yet.</p>';
-            return;
-          }
-
-          list.innerHTML = articles.map(function (article) {
-            var dateHtml = article.date
-              ? '<p class="article-date">' + escapeHtml(formatDate(article.date)) + '</p>'
-              : '';
-            return '<div class="article-card" role="button" tabindex="0" data-slug="' + escapeHtml(article.slug) + '">'
-              + '<h3>' + escapeHtml(article.title) + '</h3>'
-              + dateHtml
-              + '<p class="article-description">' + escapeHtml(article.description) + '</p>'
-              + '<span class="article-link">Read more &rarr;</span>'
-              + '</div>';
-          }).join('');
-
-          list.querySelectorAll('.article-card').forEach(function (card) {
-            card.addEventListener('click', function () {
-              window.location.hash = 'article/' + card.getAttribute('data-slug');
-            });
-            card.addEventListener('keydown', function (e) {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                window.location.hash = 'article/' + card.getAttribute('data-slug');
-              }
-            });
-          });
-        }
-
-        async function loadArticleIndex() {
-          try {
-            var res = await fetch('articles/index.json');
-            if (!res.ok) return [];
-            return await res.json();
-          } catch (e) {
-            return [];
-          }
-        }
-
-        async function showArticle(slug) {
-          var homepage = document.querySelector('.container');
-          var view = document.getElementById('article-view');
-
-          try {
-            var res = await fetch('articles/' + slug + '.md');
-            if (!res.ok) throw new Error('Not found');
-            var text = await res.text();
-            var parsed = parseFrontmatter(text);
-
-            var html = window.marked.parse(parsed.body);
-
-            document.getElementById('article-title').textContent = parsed.data.title || slug;
-
-            var dateEl = document.getElementById('article-date');
-            dateEl.textContent = parsed.data.date ? formatDate(parsed.data.date) : '';
-
-            var contentEl = document.getElementById('article-content');
-            contentEl.innerHTML = html;
-
-            contentEl.querySelectorAll('pre code').forEach(function (block) {
-              window.hljs.highlightElement(block);
-            });
-
-            homepage.style.display = 'none';
-            view.style.display = '';
-            window.scrollTo(0, 0);
-          } catch (e) {
-            window.location.hash = '';
-          }
-        }
-
-        function showHomepage() {
-          document.querySelector('.container').style.display = '';
-          document.getElementById('article-view').style.display = 'none';
-        }
-
-        async function handleRouting() {
-          var hash = window.location.hash;
-          if (hash.indexOf('#article/') === 0) {
-            var slug = hash.slice('#article/'.length);
-            await showArticle(slug);
-          } else {
-            showHomepage();
-          }
-        }
-
-        async function init() {
-          var articles = await loadArticleIndex();
-          renderArticleCards(articles);
-          await handleRouting();
-        }
-
-        window.addEventListener('hashchange', handleRouting);
-        document.addEventListener('DOMContentLoaded', init);
-      }());
-    </script>
 </body>
 </html>

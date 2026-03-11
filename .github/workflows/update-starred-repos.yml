@@ -4,6 +4,11 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * *'  # Daily at midnight UTC
+  push:
+    branches:
+      - main
+    paths:
+      - 'articles/**'
 
 permissions:
   contents: write
@@ -27,10 +32,14 @@ jobs:
         run: |
           node .github/scripts/update-starred-repos.js
 
+      - name: Generate articles index
+        run: |
+          node .github/scripts/update-articles.js
+
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add index.html
-          git diff --staged --quiet || git commit -m "chore: update starred repos in projects section"
+          git add index.html articles/index.json
+          git diff --staged --quiet || git commit -m "chore: update starred repos and articles index"
           git push

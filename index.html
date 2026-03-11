@@ -50,6 +50,7 @@
     </script>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
 </head>
 <body>
     <div class="container">
@@ -76,6 +77,19 @@
                 <span class="skill-pill">Kubernetes</span>
             </div>
         </section>
+
+        <section class="articles" id="articles-section">
+            <h2>Articles</h2>
+            <p>Thoughts and guides on SRE, infrastructure, and software development.</p>
+            <div class="article-list" id="article-list">
+                <p class="articles-loading">Loading articles...</p>
+            </div>
+        </section>
+
+        <div class="article-view" id="article-view" style="display: none;">
+            <a href="#" class="back-link">&#8592; Back</a>
+            <article id="article-content" class="article-content"></article>
+        </div>
 
         <section class="projects">
             <h2>Projects</h2>
@@ -134,5 +148,109 @@
             <p class="copyright">&copy; 2025 Allister Antosik</p>
         </footer>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+    (function () {
+        marked.use({
+            renderer: {
+                code: function (code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        var highlighted = hljs.highlight(code, { language: lang }).value;
+                        return '<pre><code class="hljs language-' + lang + '">' + highlighted + '</code></pre>';
+                    }
+                    var highlighted = hljs.highlightAuto(code).value;
+                    return '<pre><code class="hljs">' + highlighted + '</code></pre>';
+                }
+            }
+        });
+
+        function parseFrontMatter(text) {
+            var match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+            if (!match) return { frontMatter: {}, content: text };
+            var frontMatter = {};
+            match[1].split('\n').forEach(function (line) {
+                var colonIdx = line.indexOf(':');
+                if (colonIdx > 0) {
+                    frontMatter[line.substring(0, colonIdx).trim()] = line.substring(colonIdx + 1).trim();
+                }
+            });
+            return { frontMatter: frontMatter, content: match[2] };
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function homeSections() {
+            return document.querySelectorAll('.about, .skills, .projects, #articles-section');
+        }
+
+        function showHome() {
+            homeSections().forEach(function (el) { el.style.display = ''; });
+            document.getElementById('article-view').style.display = 'none';
+            loadArticleList();
+        }
+
+        function loadArticleList() {
+            var list = document.getElementById('article-list');
+            fetch('articles/index.json')
+                .then(function (res) { return res.json(); })
+                .then(function (articles) {
+                    if (!articles.length) {
+                        list.innerHTML = '<p>No articles yet.</p>';
+                        return;
+                    }
+                    list.innerHTML = articles.map(function (article) {
+                        return '<a class="article-card" href="#article=' + escapeHtml(article.slug) + '">' +
+                            '<h3>' + escapeHtml(article.title) + '</h3>' +
+                            '<p class="article-desc">' + escapeHtml(article.description) + '</p>' +
+                            '<span class="article-date">' + escapeHtml(article.date) + '</span>' +
+                            '</a>';
+                    }).join('');
+                })
+                .catch(function () {
+                    list.innerHTML = '<p>Could not load articles.</p>';
+                });
+        }
+
+        function showArticle(slug) {
+            if (!/^[a-z0-9-]+$/.test(slug)) return showHome();
+            homeSections().forEach(function (el) { el.style.display = 'none'; });
+            var articleView = document.getElementById('article-view');
+            articleView.style.display = '';
+            var content = document.getElementById('article-content');
+            content.innerHTML = '<p>Loading...</p>';
+            fetch('articles/' + slug + '.md')
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Not found');
+                    return res.text();
+                })
+                .then(function (text) {
+                    var parsed = parseFrontMatter(text);
+                    content.innerHTML = marked.parse(parsed.content);
+                })
+                .catch(function () {
+                    content.innerHTML = '<p>Article not found.</p>';
+                });
+        }
+
+        function handleRoute() {
+            var match = window.location.hash.match(/^#article=([a-z0-9-]+)$/);
+            if (match) {
+                showArticle(match[1]);
+            } else {
+                showHome();
+            }
+        }
+
+        window.addEventListener('hashchange', handleRoute);
+        window.addEventListener('load', handleRoute);
+    }());
+    </script>
 </body>
 </html>

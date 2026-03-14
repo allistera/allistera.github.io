@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero-Downtime Deployments with Kubernetes Rolling Updates - Allister Antosik</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Learn how to configure Kubernetes rolling updates and readiness probes to keep your applications available during every deployment.">
+    <meta name="author" content="Allister Antosik">
+    <link rel="canonical" href="https://allisterantosik.com/articles/zero-downtime-kubernetes-deployments/">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Zero-Downtime Deployments with Kubernetes Rolling Updates">
+    <meta property="og:description" content="Learn how to configure Kubernetes rolling updates and readiness probes to keep your applications available during every deployment.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://allisterantosik.com/articles/zero-downtime-kubernetes-deployments/">
+    <meta property="og:site_name" content="Allister Antosik">
+    <meta property="article:published_time" content="2025-11-15">
+    <meta property="article:modified_time" content="2025-11-15">
+    <meta property="article:author" content="Allister Antosik">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Zero-Downtime Deployments with Kubernetes Rolling Updates">
+    <meta name="twitter:description" content="Learn how to configure Kubernetes rolling updates and readiness probes to keep your applications available during every deployment.">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Zero-Downtime Deployments with Kubernetes Rolling Updates",
+    "description": "Learn how to configure Kubernetes rolling updates and readiness probes to keep your applications available during every deployment.",
+    "url": "https://allisterantosik.com/articles/zero-downtime-kubernetes-deployments/",
+    "datePublished": "2025-11-15",
+    "dateModified": "2025-11-15",
+    "author": {
+        "@type": "Person",
+        "name": "Allister Antosik",
+        "url": "https://allisterantosik.com"
+    },
+    "publisher": {
+        "@type": "Person",
+        "name": "Allister Antosik",
+        "url": "https://allisterantosik.com"
+    },
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://allisterantosik.com/articles/zero-downtime-kubernetes-deployments/"
+    }
+}
+    </script>
+
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">&#8592; Back</a>
+        <article class="article-content">
+            <h1>Zero-Downtime Deployments with Kubernetes Rolling Updates</h1>
+<p>Deploying new versions of an application without dropping traffic is one of the core responsibilities of an SRE. Kubernetes rolling updates make this achievable out of the box, but a few misconfigurations can still cause brief outages. This guide walks through the key settings and why they matter.</p>
+<h2>How Rolling Updates Work</h2>
+<p>When you update a Deployment, Kubernetes gradually replaces old Pods with new ones. At no point does it terminate all running Pods first — instead it respects two key parameters:</p>
+<ul>
+<li><strong><code>maxSurge</code></strong> — how many extra Pods can be created above the desired replica count during the update</li>
+<li><strong><code>maxUnavailable</code></strong> — how many Pods can be unavailable at any given time during the update</li>
+</ul>
+<p>By default both values are set to <code>25%</code>, which means for a 4-replica Deployment, Kubernetes will bring up one new Pod before terminating an old one.</p>
+<h2>Basic Deployment Configuration</h2>
+<p>Here is a minimal Deployment that demonstrates the key fields:</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-api
+  namespace: production
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: my-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: my-api
+    spec:
+      containers:
+        - name: my-api
+          image: ghcr.io/allistera/my-api:1.2.0
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+</code></pre>
+<p>Setting <code>maxUnavailable: 0</code> guarantees that the service always has the full replica count available. The trade-off is that the rollout takes slightly longer because a new Pod must become ready before an old one is terminated.</p>
+<h2>Why Readiness Probes Are Non-Negotiable</h2>
+<p>Without a readiness probe Kubernetes has no way to know that your new container is actually serving traffic. It will mark the Pod as <code>Ready</code> the moment the container starts, and the old Pod is terminated immediately — before your application has finished booting.</p>
+<p>A minimal HTTP readiness probe looks like this in practice:</p>
+<pre><code class="language-yaml">readinessProbe:
+  httpGet:
+    path: /healthz
+  port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 3
+</code></pre>
+<p>Your <code>/healthz</code> endpoint should return a non-2xx status code if the application is not ready to serve traffic (for example, while a database migration is still running).</p>
+<h2>Triggering and Watching a Rollout</h2>
+<p>Once your Deployment is configured, triggering an update is as simple as changing the image tag:</p>
+<pre><code class="language-bash">kubectl set image deployment/my-api \
+  my-api=ghcr.io/allistera/my-api:1.3.0 \
+  -n production
+</code></pre>
+<p>You can watch the progress in real time:</p>
+<pre><code class="language-bash">kubectl rollout status deployment/my-api -n production
+</code></pre>
+<p>If something looks wrong, roll back immediately:</p>
+<pre><code class="language-bash">kubectl rollout undo deployment/my-api -n production
+</code></pre>
+<p>Kubernetes keeps the previous ReplicaSet around (controlled by <code>revisionHistoryLimit</code>), so the rollback is instant — no image pull required.</p>
+<h2>Pod Disruption Budgets</h2>
+<p>For critical services, pair your rolling update strategy with a <code>PodDisruptionBudget</code>. This protects your Pods from being evicted simultaneously during a node drain or cluster upgrade:</p>
+<pre><code class="language-yaml">apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: my-api-pdb
+  namespace: production
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: my-api
+</code></pre>
+<p>This ensures at least 3 out of 4 replicas are always available, even if a node is taken offline for maintenance.</p>
+<h2>Graceful Shutdown</h2>
+<p>The final piece of the puzzle is making sure your application handles <code>SIGTERM</code> correctly. When Kubernetes terminates a Pod it sends <code>SIGTERM</code> and then waits for <code>terminationGracePeriodSeconds</code> (default 30s) before force-killing with <code>SIGKILL</code>.</p>
+<p>A Node.js application that drains in-flight requests before exiting:</p>
+<pre><code class="language-javascript">process.on(&#39;SIGTERM&#39;, () =&gt; {
+  console.log(&#39;Received SIGTERM, shutting down gracefully&#39;);
+
+  server.close(() =&gt; {
+    console.log(&#39;All connections closed, exiting&#39;);
+    process.exit(0);
+  });
+
+  // Force exit if graceful shutdown takes too long
+  setTimeout(() =&gt; {
+    console.error(&#39;Graceful shutdown timed out, forcing exit&#39;);
+    process.exit(1);
+  }, 25000);
+});
+</code></pre>
+<p>Set <code>terminationGracePeriodSeconds</code> on the Pod spec to match the maximum time your application needs to drain:</p>
+<pre><code class="language-yaml">spec:
+  terminationGracePeriodSeconds: 30
+</code></pre>
+<h2>Summary</h2>
+<p>Achieving zero-downtime deployments with Kubernetes requires four things working together:</p>
+<ol>
+<li><strong>Rolling update strategy</strong> — <code>maxUnavailable: 0</code> with <code>maxSurge: 1</code> keeps the full replica count available at all times</li>
+<li><strong>Readiness probes</strong> — prevent traffic from reaching Pods that are not yet ready</li>
+<li><strong>Pod Disruption Budgets</strong> — protect against simultaneous evictions during cluster operations</li>
+<li><strong>Graceful shutdown</strong> — drain in-flight requests before the process exits</li>
+</ol>
+<p>Get these right and your deployments become a non-event for your users.</p>
+
+        </article>
+        <footer>
+            <div class="social-links">
+                <a href="https://github.com/allistera" target="_blank">GitHub</a>
+                <a href="https://www.linkedin.com/in/allisterantosik/" target="_blank">LinkedIn</a>
+                <a href="mailto:hey@allisterantosik.com">Contact</a>
+            </div>
+            <p class="copyright">&copy; 2025 Allister Antosik</p>
+        </footer>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

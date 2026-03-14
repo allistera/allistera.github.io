@@ -199,6 +199,7 @@
         function showHome() {
             homeSections().forEach(function (el) { el.style.display = ''; });
             document.getElementById('article-view').style.display = 'none';
+            document.title = 'Allister Antosik - Lead SRE & Software Developer';
             loadArticleList();
         }
 
@@ -212,7 +213,7 @@
                         return;
                     }
                     list.innerHTML = articles.map(function (article) {
-                        return '<a class="article-card" href="#article=' + escapeHtml(article.slug) + '">' +
+                        return '<a class="article-card" href="/articles/' + escapeHtml(article.slug) + '/">' +
                             '<h3>' + escapeHtml(article.title) + '</h3>' +
                             '<p class="article-desc">' + escapeHtml(article.description) + '</p>' +
                             '<span class="article-date">' + escapeHtml(article.date) + '</span>' +
@@ -238,6 +239,9 @@
                 })
                 .then(function (text) {
                     var parsed = parseFrontMatter(text);
+                    if (parsed.frontMatter.title) {
+                        document.title = parsed.frontMatter.title + ' - Allister Antosik';
+                    }
                     content.innerHTML = marked.parse(parsed.content);
                 })
                 .catch(function () {

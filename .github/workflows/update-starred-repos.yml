@@ -32,14 +32,19 @@ jobs:
         run: |
           node .github/scripts/update-starred-repos.js
 
-      - name: Generate articles index
+      - name: Generate articles index and sitemap
         run: |
           node .github/scripts/update-articles.js
+
+      - name: Generate static article pages
+        run: |
+          npm install marked
+          node .github/scripts/generate-article-pages.js
 
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add index.html articles/index.json
-          git diff --staged --quiet || git commit -m "chore: update starred repos and articles index"
+          git add index.html articles/index.json sitemap.xml articles/*/index.html
+          git diff --staged --quiet || git commit -m "chore: update starred repos, articles, and sitemap"
           git push

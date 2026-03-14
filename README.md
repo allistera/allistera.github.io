@@ -10,19 +10,7 @@ The site automatically showcases GitHub starred repositories, updated nightly.
 2. Push this code to the repository
 3. Go to repository Settings > Pages
 4. Under "Source", select the main branch
-5. Your site will be live at `https://yourusername.github.io`
-
-## Customization
-
-Edit `index.html` to update:
-- Your name and title
-- About section content
-- Project details and links
-- Social media links and contact information
-
-## Local Development
-
-Open `index.html` in your browser to preview changes locally.
+5. Your site will be live. 
 
 ## Automated Project Updates
 

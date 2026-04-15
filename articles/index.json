@@ -1,5 +1,11 @@
 [
   {
+    "slug": "clean-up-your-github-account",
+    "title": "Clean Up Your GitHub Account",
+    "description": "I ended up with more than 100 abandoned GitHub repos, so I built github-smash, a GitHub Actions cleanup tool that deletes anything not on a whitelist.",
+    "date": "2026-04-15"
+  },
+  {
     "slug": "mass-uninstall-ios-apps-apple-configurator",
     "title": "Mass Uninstall iOS Apps with Apple Configurator on Mac",
     "description": "Stop removing apps one by one — Apple Configurator lets you select and uninstall multiple apps from iOS devices in a single action, saving significant time when managing many devices or doing a spring clean.",

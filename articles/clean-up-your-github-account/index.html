@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Up Your GitHub Account - Allister Antosik</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="I ended up with more than 100 abandoned GitHub repos, so I built github-smash, a GitHub Actions cleanup tool that deletes anything not on a whitelist.">
+    <meta name="author" content="Allister Antosik">
+    <link rel="canonical" href="https://allisterantosik.com/articles/clean-up-your-github-account/">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Clean Up Your GitHub Account">
+    <meta property="og:description" content="I ended up with more than 100 abandoned GitHub repos, so I built github-smash, a GitHub Actions cleanup tool that deletes anything not on a whitelist.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://allisterantosik.com/articles/clean-up-your-github-account/">
+    <meta property="og:site_name" content="Allister Antosik">
+    <meta property="article:published_time" content="2026-04-15">
+    <meta property="article:modified_time" content="2026-04-15">
+    <meta property="article:author" content="Allister Antosik">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Clean Up Your GitHub Account">
+    <meta name="twitter:description" content="I ended up with more than 100 abandoned GitHub repos, so I built github-smash, a GitHub Actions cleanup tool that deletes anything not on a whitelist.">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Clean Up Your GitHub Account",
+    "description": "I ended up with more than 100 abandoned GitHub repos, so I built github-smash, a GitHub Actions cleanup tool that deletes anything not on a whitelist.",
+    "url": "https://allisterantosik.com/articles/clean-up-your-github-account/",
+    "datePublished": "2026-04-15",
+    "dateModified": "2026-04-15",
+    "author": {
+        "@type": "Person",
+        "name": "Allister Antosik",
+        "url": "https://allisterantosik.com"
+    },
+    "publisher": {
+        "@type": "Person",
+        "name": "Allister Antosik",
+        "url": "https://allisterantosik.com"
+    },
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://allisterantosik.com/articles/clean-up-your-github-account/"
+    }
+}
+    </script>
+
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">&#8592; Back</a>
+        <article class="article-content">
+            <h1>Clean Up Your GitHub Account</h1>
+<p>At some point my GitHub account turned into the digital equivalent of a garage full of broken chairs, mystery cables, and boxes labelled &quot;might be useful later&quot;.</p>
+<p>I had created well over 100 repositories. Some were real projects. Some were experiments. Some were &quot;I just want to test one tiny thing&quot; repos that got a single commit and were then quietly abandoned to the elements.</p>
+<p>After looking at the pile for long enough, I built <a href="https://github.com/allistera/github-smash">github-smash</a>. It is a small tool that runs through a GitHub Actions workflow and deletes every repository that is not on a whitelist. Which is a mildly alarming sentence, but also very satisfying.</p>
+<h2>Why I Built It</h2>
+<p>I did not want to manually inspect repo after repo asking:</p>
+<ul>
+<li>Is this still useful?</li>
+<li>Does this contain anything important?</li>
+<li>Why did I name this one <code>test-final-2-actual</code>?</li>
+<li>Why are there four versions of the same half-finished idea?</li>
+</ul>
+<p>That kind of cleanup sounds manageable until you are 37 repositories deep and opening another abandoned prototype from a random Tuesday night.</p>
+<p>So instead of deleting things one by one, I wanted something boring and repeatable:</p>
+<ol>
+<li>Keep the projects I know I care about.</li>
+<li>Preview what is about to disappear.</li>
+<li>Remove the rest.</li>
+</ol>
+<h2>How <code>github-smash</code> Works</h2>
+<p>The setup is intentionally simple:</p>
+<ul>
+<li>A <code>repo-whitelist.yml</code> file contains the repositories to keep in <code>owner/repo</code> format.</li>
+<li>A GitHub Actions workflow fetches all repositories owned by the authenticated user.</li>
+<li>The workflow compares that full list against the whitelist.</li>
+<li>Anything not on the whitelist is either reported in <code>dry_run</code> mode or deleted for real.</li>
+</ul>
+<p>A tiny whitelist looks like this:</p>
+<pre><code class="language-yaml">repositories:
+  - allistera/allistera.github.io
+  - allistera/github-smash
+  - allistera/things-sorter
+</code></pre>
+<p>The workflow uses a token stored as a repository secret, so the cleanup logic lives in GitHub and can be triggered from the Actions tab without needing to run a local script.</p>
+<h2>Why I Chose a Whitelist Instead of a Blacklist</h2>
+<p>A blacklist sounds safer at first. You make a list of repos to delete and leave everything else alone. Very sensible. Very measured. Very adult.</p>
+<p>The problem is that my account was already far beyond that point.</p>
+<p>I did not have a neat list of five obvious repositories to remove. I had a sprawling heap of forgotten side projects, throwaway tests, abandoned demos, and &quot;I will sort this out later&quot; repos. A blacklist would have meant identifying every single repo I was confident could be deleted. That was exactly the job I was trying to avoid.</p>
+<p>The whitelist approach flipped the decision:</p>
+<ul>
+<li>If I know I want to keep it, it goes on the whitelist.</li>
+<li>If I am unsure, the dry run gives me a chance to catch it before anything happens.</li>
+<li>If it is not important enough to make the keep list, it is probably part of the mess.</li>
+</ul>
+<p>It also matched the risk profile better. There were too many old repositories where I could not be completely sure what was in them anymore. Old config. Forgotten experiments. Possibly some ancient secret-shaped mistake from a less disciplined era. I did not want to pretend I had perfect certainty about what was safe to throw away.</p>
+<p>The whitelist forced me to decide what deserved to survive, instead of trying to maintain a giant list of everything I thought was probably junk.</p>
+<h2>Dry Run First, Chaos Second</h2>
+<p><code>github-smash</code> has a <code>dry_run</code> mode, which is the feature that stops this whole idea becoming performance art.</p>
+<p>In dry run, the workflow tells you:</p>
+<ul>
+<li>how many repositories it found</li>
+<li>how many are on the whitelist</li>
+<li>what would be deleted</li>
+</ul>
+<p>That gives you one last chance to spot the repo you forgot about before the workflow gets enthusiastic.</p>
+<p>Only when the output looks right do you run it again with <code>dry_run</code> set to <code>false</code>.</p>
+<h2>A Slightly Unhinged Way to Tidy Up</h2>
+<p>This is not enterprise-grade lifecycle management. This is just me looking at a GitHub account full of neglected projects and deciding it was time to stop pretending I would come back to <code>weekend-tooling-test</code> one day.</p>
+<p>If your GitHub account has also become a small software graveyard, <a href="https://github.com/allistera/github-smash">github-smash</a> might help. Add the repos you actually care about, run the workflow in dry-run mode, and let the cleanup begin.</p>
+
+        </article>
+        <footer>
+            <div class="social-links">
+                <a href="https://github.com/allistera" target="_blank">GitHub</a>
+                <a href="https://www.linkedin.com/in/allisterantosik/" target="_blank">LinkedIn</a>
+                <a href="mailto:hey@allisterantosik.com">Contact</a>
+            </div>
+            <p class="copyright">&copy; 2025 Allister Antosik</p>
+        </footer>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

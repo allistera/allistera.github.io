@@ -1,6 +1,7 @@
 # Allow all search engines to crawl the site
 User-agent: *
 Allow: /
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
 
 # Sitemap location
 Sitemap: https://allisterantosik.com/sitemap.xml
